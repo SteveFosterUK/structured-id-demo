@@ -1,20 +1,203 @@
-import { useState } from 'react'
-import './App.css'
-import { generateId } from "structured-id"
+import { useMemo, useState } from "react";
+import { generateId, validateId, formatId } from "structured-id";
+import { Button } from "./components/ui/button";
+import { Card, CardHeader, CardContent, CardTitle } from "./components/ui/card";
+import { Input } from "./components/ui/input";
+import { Label } from "./components/ui/label";
+import { Checkbox } from "./components/ui/checkbox";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "./components/ui/select";
 
-function App() {
-  const [id, setId] = useState("XXXX-XXXX-XXXX-XXXX");
+type Charset = "numeric" | "alphanumeric";
+type Algorithm = "none" | "luhn" | "mod36";
 
-  return (
-    <>
-      <h1 className="text-blue-600">{id}</h1>
-      <div className="card">
-        <button onClick={() => setId(generateId({separator:"-", charset:"alphanumeric"}))}>
-            Generate ID
-        </button>
-      </div>
-    </>
-  )
+export default function App() {
+    const [charset, setCharset] = useState<Charset>("numeric");
+    const [algorithm, setAlgorithm] = useState<Algorithm>("none");
+    const [groups, setGroups] = useState(4);
+    const [groupSize, setGroupSize] = useState(4);
+    const [separator, setSeparator] = useState(" ");
+    const [useCrypto, setUseCrypto] = useState(true);
+
+    const [id, setId] = useState("");
+    const [toValidate, setToValidate] = useState("");
+    const [isValid, setIsValid] = useState<boolean | null>(null);
+
+    const totalLength = useMemo(() => groups * groupSize, [groups, groupSize]);
+    const bitsPerChar = charset === "numeric" ? Math.log2(10) : Math.log2(36);
+    const entropyBits = Math.round(bitsPerChar * totalLength);
+
+    const algoOptions: Algorithm[] =
+        charset === "numeric" ? ["none", "luhn"] : ["none", "mod36"];
+
+    function handleGenerate() {
+        const code = generateId({
+            charset,
+            algorithm,
+            groups,
+            groupSize,
+            useCrypto,
+        });
+        setId(code);
+        setIsValid(null);
+    }
+
+    function handleValidate() {
+        const target = toValidate || id;
+        const ok = validateId(target, { charset, algorithm, groups, groupSize });
+        setIsValid(ok);
+    }
+
+    const pretty = useMemo(() => {
+        if (!id) return "";
+        try {
+            return formatId(id, { groups, groupSize, separator, charset });
+        } catch {
+            return id;
+        }
+    }, [id, groups, groupSize, separator, charset]);
+
+    return (
+        <div className="mx-auto max-w-4xl p-6 space-y-6">
+            <header className="space-y-1">
+                <h1 className="text-2xl font-semibold tracking-tight">structured-id demo</h1>
+                <p className="text-sm text-muted-foreground">
+                    Generate & validate structured IDs/codes with optional checksums.
+                </p>
+            </header>
+
+            <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Options</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {/* Charset */}
+                        <div className="space-y-2">
+                            <Label>Charset</Label>
+                            <Select
+                                value={charset}
+                                onValueChange={(v: Charset) => {
+                                    setCharset(v);
+                                    // keep combo valid
+                                    if (v === "numeric" && algorithm === "mod36") setAlgorithm("none");
+                                    if (v === "alphanumeric" && algorithm === "luhn") setAlgorithm("none");
+                                }}
+                            >
+                                <SelectTrigger><SelectValue placeholder="Choose charset" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="numeric">numeric (0–9)</SelectItem>
+                                    <SelectItem value="alphanumeric">alphanumeric (0–9, A–Z)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Algorithm */}
+                        <div className="space-y-2">
+                            <Label>Algorithm (checksum)</Label>
+                            <Select value={algorithm} onValueChange={(v: Algorithm) => setAlgorithm(v)}>
+                                <SelectTrigger><SelectValue placeholder="Choose algorithm" /></SelectTrigger>
+                                <SelectContent>
+                                    {algoOptions.map((a) => (
+                                        <SelectItem key={a} value={a}>{a}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Groups / Group Size */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Groups</Label>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    value={groups}
+                                    onChange={(e) => setGroups(Math.max(1, Number(e.target.value) || 1))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Group size</Label>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    value={groupSize}
+                                    onChange={(e) => setGroupSize(Math.max(1, Number(e.target.value) || 1))}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Separator */}
+                        <div className="space-y-2">
+                            <Label>Separator</Label>
+                            <Input
+                                placeholder="space, -, etc"
+                                value={separator}
+                                onChange={(e) => setSeparator(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Web Crypto */}
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="useCrypto"
+                                checked={useCrypto}
+                                onCheckedChange={(b) => setUseCrypto(Boolean(b))}
+                            />
+                            <Label htmlFor="useCrypto">Use Web Crypto RNG</Label>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground">
+                            Total length: <b>{totalLength}</b> • Entropy: <b>{entropyBits} bits</b>
+                        </p>
+
+                        <Button
+                            className="active:scale-[0.98] transition-transform"
+                            onClick={handleGenerate}
+                        >
+                            Generate
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Result & Validation</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <div className="text-xs text-muted-foreground mb-1">Raw</div>
+                            <pre className="rounded bg-secondary p-2 text-sm overflow-x-auto">{id || "—"}</pre>
+                        </div>
+                        <div>
+                            <div className="text-xs text-muted-foreground mb-1">Formatted</div>
+                            <pre className="rounded bg-secondary p-2 text-sm overflow-x-auto">{pretty || "—"}</pre>
+                        </div>
+
+                        <div className="h-px bg-border" />
+
+                        <div className="space-y-2">
+                            <Label>Validate</Label>
+                            <Input
+                                placeholder="Paste an ID or leave blank to validate current"
+                                value={toValidate}
+                                onChange={(e) => setToValidate(e.target.value)}
+                            />
+                            <Button variant="secondary" onClick={handleValidate}>
+                                Validate
+                            </Button>
+                            {isValid !== null && (
+                                <p className={`text-sm ${isValid ? "text-green-600" : "text-red-600"}`}>
+                                    {isValid ? "Valid ✅" : "Invalid ❌"}
+                                </p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <footer className="text-xs text-muted-foreground">
+                Built with React + Tailwind + shadcn/ui • Uses <code>structured-id</code>
+            </footer>
+        </div>
+    );
 }
-
-export default App
