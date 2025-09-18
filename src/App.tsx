@@ -15,6 +15,7 @@ export default function App() {
     const [groupSize, setGroupSize] = useState(4);
     const [separator, setSeparator] = useState("");
     const [useCrypto, setUseCrypto] = useState(true);
+    const [mode, setMode] = useState<"generate" | "validate">("generate");
 
     const [id, setId] = useState("");
     const [toValidate, setToValidate] = useState("");
@@ -30,6 +31,13 @@ useEffect(() => {
   setIsValid(null);
   setCopied(null);
 }, [charset, groups, groupSize, algorithm]);
+
+useEffect(() => {
+  setId("");
+  setToValidate("");
+  setIsValid(null);
+  setCopied(null);
+}, [mode]);
 
     const totalLength = useMemo(() => groups * groupSize, [groups, groupSize]);
     const bitsPerChar = charset === "numeric" ? Math.log2(10) : Math.log2(36);
@@ -80,180 +88,263 @@ useEffect(() => {
     return (
       <div className="mx-auto max-w-3xl p-6 space-y-8">
         {/* Hero */}
-        <header className="text-center space-y-2">
+        <header className="text-center space-y-3">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">structured-id</h1>
           <p className="text-sm text-muted-foreground">
             Generate &amp; validate structured IDs/codes with optional checksums.
           </p>
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant={mode === "generate" ? "default" : "secondary"}
+              onClick={() => setMode("generate")}
+              className="h-8 px-3"
+            >
+              Generate
+            </Button>
+            <Button
+              variant={mode === "validate" ? "default" : "secondary"}
+              onClick={() => setMode("validate")}
+              className="h-8 px-3"
+            >
+              Validate
+            </Button>
+          </div>
         </header>
 
         {/* Big display */}
         <section className="space-y-3">
-          <div className="text-xs text-muted-foreground text-center">Click the code to copy</div>
-          <div className="relative">
-            <AnimatePresence mode="popLayout">
-              <motion.pre
-                key={pretty || "empty"}
-                role="button"
-                tabIndex={0}
-                title="Click to copy"
-                onClick={() => copyToClipboard(pretty, "raw")}
-                onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && copyToClipboard(pretty, "raw")}
-                className="mx-auto max-w-full select-text rounded-2xl bg-secondary/70 p-5 md:p-6 text-center text-xl md:text-2xl font-mono overflow-x-auto shadow-sm cursor-pointer ring-0 hover:ring-1 ring-primary transition"
-                initial={{ opacity: 0, y: -6, scale: 0.99 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 6, scale: 0.99 }}
-                transition={{ duration: 0.18 }}
-              >
-                {pretty || "—"}
-              </motion.pre>
-            </AnimatePresence>
-            <AnimatePresence>
-              {copied === "raw" && (
-                <motion.span
-                  key="copied-hero"
-                  aria-live="polite"
-                  className="absolute top-1/2 -translate-y-1/2 right-2 rounded bg-black/80 text-white text-xs px-2 py-0.5 shadow-sm"
-                  initial={{ opacity: 0, y: -6, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -6, scale: 0.95 }}
-                  transition={{ duration: 0.18 }}
-                >
-                  Copied
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </div>
-          <div className="flex justify-center">
-            <Button className="active:scale-[0.98] transition-transform" onClick={handleGenerate}>Generate</Button>
-          </div>
-          <p className="text-center text-xs text-muted-foreground">Total length: <b>{totalLength}</b> • Entropy: <b>{entropyBits} bits</b></p>
+          {mode === "generate" ? (
+            <>
+              <div className="text-xs text-muted-foreground text-center">Click the code to copy</div>
+              <div className="relative">
+                <AnimatePresence mode="popLayout">
+                  <motion.pre
+                    key={pretty || "empty"}
+                    role="button"
+                    tabIndex={0}
+                    title="Click to copy"
+                    onClick={() => copyToClipboard(pretty, "raw")}
+                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && copyToClipboard(pretty, "raw")}
+                    className="mx-auto max-w-full select-text rounded-2xl bg-secondary/70 p-5 md:p-6 text-center text-xl md:text-2xl font-mono overflow-x-auto shadow-sm cursor-pointer ring-0 hover:ring-1 ring-primary transition h-20 md:h-24 flex items-center justify-center"
+                    initial={{ opacity: 0, y: -6, scale: 0.99 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.99 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    {pretty || "—"}
+                  </motion.pre>
+                </AnimatePresence>
+                <AnimatePresence>
+                  {copied === "raw" && (
+                    <motion.span
+                      key="copied-hero"
+                      aria-live="polite"
+                      className="absolute top-1/2 -translate-y-1/2 right-2 rounded bg-black/80 text-white text-xs px-2 py-0.5 shadow-sm"
+                      initial={{ opacity: 0, y: -6, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -6, scale: 0.95 }}
+                      transition={{ duration: 0.18 }}
+                    >
+                      Copied
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
+              <div className="flex justify-center">
+                <Button className="active:scale-[0.98] transition-transform" onClick={handleGenerate}>Generate</Button>
+              </div>
+              <p className="text-center text-xs text-muted-foreground">Total length: <b>{totalLength}</b> • Entropy: <b>{entropyBits} bits</b></p>
+            </>
+          ) : (
+            <>
+              <div className="text-xs text-muted-foreground text-center">Paste or type an ID, then validate</div>
+              <div className="relative">
+                <Input
+                  value={toValidate}
+                  onChange={(e) => setToValidate(e.target.value)}
+                  placeholder="Paste an ID to validate"
+                  className="mx-auto w-full rounded-2xl bg-secondary/60 p-5 md:p-6 text-center text-xl md:text-2xl font-mono shadow-sm h-20 md:h-24"
+                />
+              </div>
+              <div className="flex items-center justify-center gap-3">
+                <Button variant="secondary" onClick={handleValidate}>Validate</Button>
+                <AnimatePresence mode="wait">
+                  {isValid !== null && (
+                    <motion.span
+                      key={String(isValid)}
+                      className={`text-sm ${isValid ? "text-green-600" : "text-red-600"}`}
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      {isValid ? "Valid ✅" : "Invalid ❌"}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
+              <p className="text-center text-xs text-muted-foreground">
+                Uses current settings (charset, groups, group size, checksum) when validating.
+              </p>
+            </>
+          )}
         </section>
 
         {/* Config cards */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Options */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Options</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Charset</Label>
+        {mode === "generate" ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Options */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Options</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Charset</Label>
+                  <Select
+                    value={charset}
+                    onValueChange={(v: Charset) => {
+                      setCharset(v);
+                      if (v === "numeric" && algorithm === "mod36") setAlgorithm("none");
+                      if (v === "alphanumeric" && algorithm === "luhn") setAlgorithm("none");
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Choose charset" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="numeric">numeric (0–9)</SelectItem>
+                      <SelectItem value="alphanumeric">alphanumeric (0–9, A–Z)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Groups</Label>
+                    <Input type="number" min={1} value={groups}
+                      onChange={(e) => setGroups(Math.max(1, Number(e.target.value) || 1))} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Group size</Label>
+                    <Input type="number" min={1} value={groupSize}
+                      onChange={(e) => setGroupSize(Math.max(1, Number(e.target.value) || 1))} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Formatting */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Formatting</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Separator</Label>
+                  <Input placeholder="space, - , etc" value={separator}
+                         onChange={(e) => setSeparator(e.target.value)} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Checksum */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Checksum</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Label>Algorithm</Label>
                 <Select
-                  value={charset}
-                  onValueChange={(v: Charset) => {
-                    setCharset(v);
-                    // keep combo valid
-                    if (v === "numeric" && algorithm === "mod36") setAlgorithm("none");
-                    if (v === "alphanumeric" && algorithm === "luhn") setAlgorithm("none");
-                  }}
+                  value={algorithm}
+                  onValueChange={(v: Algorithm) => setAlgorithm(v)}
                 >
-                  <SelectTrigger><SelectValue placeholder="Choose charset" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Choose algorithm" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="numeric">numeric (0–9)</SelectItem>
-                    <SelectItem value="alphanumeric">alphanumeric (0–9, A–Z)</SelectItem>
+                    {(charset === "numeric" ? ["none","luhn"] : ["none","mod36"]).map((a) => (
+                      <SelectItem key={a} value={a as Algorithm}>{a}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Groups</Label>
-                  <Input type="number" min={1} value={groups}
-                    onChange={(e) => setGroups(Math.max(1, Number(e.target.value) || 1))} />
+                <p className="text-xs text-muted-foreground">Disable to use pure random (no checksum).</p>
+              </CardContent>
+            </Card>
+
+            {/* RNG */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Randomness</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox id="useCrypto" checked={useCrypto}
+                            onCheckedChange={(b) => setUseCrypto(Boolean(b))} />
+                  <Label htmlFor="useCrypto">Use Web Crypto RNG</Label>
                 </div>
+                <p className="text-xs text-muted-foreground">If disabled, falls back to Math.random().</p>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Options (still relevant for validation) */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Options</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Group size</Label>
-                  <Input type="number" min={1} value={groupSize}
-                    onChange={(e) => setGroupSize(Math.max(1, Number(e.target.value) || 1))} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Formatting */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Formatting</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Separator</Label>
-                <Input placeholder="space, - , etc" value={separator}
-                       onChange={(e) => setSeparator(e.target.value)} />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Checksum */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Checksum</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Label>Algorithm</Label>
-              <Select
-                value={algorithm}
-                onValueChange={(v: Algorithm) => setAlgorithm(v)}
-              >
-                <SelectTrigger><SelectValue placeholder="Choose algorithm" /></SelectTrigger>
-                <SelectContent>
-                  {(charset === "numeric" ? ["none","luhn"] : ["none","mod36"]).map((a) => (
-                    <SelectItem key={a} value={a as Algorithm}>{a}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">Disable to use pure random (no checksum).</p>
-            </CardContent>
-          </Card>
-
-          {/* RNG */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Randomness</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Checkbox id="useCrypto" checked={useCrypto}
-                          onCheckedChange={(b) => setUseCrypto(Boolean(b))} />
-                <Label htmlFor="useCrypto">Use Web Crypto RNG</Label>
-              </div>
-              <p className="text-xs text-muted-foreground">If disabled, falls back to Math.random().</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Validation */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Validate</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Label>Paste an ID (or leave blank to validate current)</Label>
-            <Input
-              placeholder="Paste an ID or leave blank to validate current"
-              value={toValidate}
-              onChange={(e) => setToValidate(e.target.value)}
-            />
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={handleValidate}>Validate</Button>
-              {isValid !== null && (
-                <AnimatePresence mode="wait">
-                  <motion.p
-                    key={String(isValid)}
-                    className={`text-sm ${isValid ? "text-green-600" : "text-red-600"}`}
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 4 }}
-                    transition={{ duration: 0.15 }}
+                  <Label>Charset</Label>
+                  <Select
+                    value={charset}
+                    onValueChange={(v: Charset) => {
+                      setCharset(v);
+                      if (v === "numeric" && algorithm === "mod36") setAlgorithm("none");
+                      if (v === "alphanumeric" && algorithm === "luhn") setAlgorithm("none");
+                    }}
                   >
-                    {isValid ? "Valid ✅" : "Invalid ❌"}
-                  </motion.p>
-                </AnimatePresence>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                    <SelectTrigger><SelectValue placeholder="Choose charset" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="numeric">numeric (0–9)</SelectItem>
+                      <SelectItem value="alphanumeric">alphanumeric (0–9, A–Z)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Groups</Label>
+                    <Input type="number" min={1} value={groups}
+                      onChange={(e) => setGroups(Math.max(1, Number(e.target.value) || 1))} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Group size</Label>
+                    <Input type="number" min={1} value={groupSize}
+                      onChange={(e) => setGroupSize(Math.max(1, Number(e.target.value) || 1))} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Checksum (still relevant for validation) */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Checksum</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Label>Algorithm</Label>
+                <Select
+                  value={algorithm}
+                  onValueChange={(v: Algorithm) => setAlgorithm(v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Choose algorithm" /></SelectTrigger>
+                  <SelectContent>
+                    {(charset === "numeric" ? ["none","luhn"] : ["none","mod36"]).map((a) => (
+                      <SelectItem key={a} value={a as Algorithm}>{a}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Validation enforces charset, length &amp; checksum.</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Footer */}
         <footer className="text-center text-xs text-muted-foreground">
