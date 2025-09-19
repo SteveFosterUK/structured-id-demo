@@ -1,8 +1,11 @@
 # structured-id demo
 
+[![License](https://img.shields.io/npm/l/structured-id.svg)](https://github.com/SteveFosterUK/structured-id-demo/blob/main/LICENSE)
+
 Interactive demo for [**structured-id**](https://www.npmjs.com/package/structured-id) — a TypeScript library to generate & validate **structured IDs/codes** (numeric or alphanumeric) with optional **checksums** (Luhn / mod36), grouping & formatting, and zero runtime deps.
 
 **Live demo:** https://structured-id-demo.vercel.app/
+
 **Library:** https://www.npmjs.com/package/structured-id • https://github.com/SteveFosterUK/structured-id
 
 ---
@@ -49,3 +52,10 @@ npm run dev
 
 # 4) Open
 # Vite will print a local URL (usually http://localhost:5173)
+```
+
+---
+
+## License
+
+MIT License © Steve Foster
