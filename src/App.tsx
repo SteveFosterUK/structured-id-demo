@@ -218,18 +218,50 @@ export default function App() {
                       Validate
                     </Button>
                   </motion.div>
+
                   <AnimatePresence mode="wait">
                     {isValid !== null && (
-                      <motion.span
+                      <motion.div
                         key={String(isValid)}
-                        className={`text-sm ${isValid ? "text-green-600" : "text-red-600"}`}
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 4 }}
-                        transition={{ duration: 0.15 }}
+                        role="status"
+                        aria-live="polite"
+                        initial={{ opacity: 0, y: -6, scale: 0.95 }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                          scale: 1,
+                          ...(isValid
+                            ? {}
+                            : { x: [0, -3, 3, -2, 2, 0] }) // subtle shake on invalid
+                        }}
+                        exit={{ opacity: 0, y: -6, scale: 0.95 }}
+                        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium shadow-sm ${
+                          isValid
+                            ? "bg-green-100 text-green-800 border-green-300"
+                            : "bg-red-100 text-red-800 border-red-300"
+                        }`}
                       >
-                        {isValid ? "Valid ✅" : "Invalid ❌"}
-                      </motion.span>
+                        {isValid ? (
+                          <>
+                            {/* check-circle */}
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
+                              <circle cx="12" cy="12" r="9"></circle>
+                            </svg>
+                            <span>Valid</span>
+                          </>
+                        ) : (
+                          <>
+                            {/* x-circle */}
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 9l-6 6m0-6l6 6" />
+                              <circle cx="12" cy="12" r="9"></circle>
+                            </svg>
+                            <span>Invalid</span>
+                          </>
+                        )}
+                      </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
