@@ -13,7 +13,7 @@ export default function App() {
     const [algorithm, setAlgorithm] = useState<Algorithm>("none");
     const [groups, setGroups] = useState(4);
     const [groupSize, setGroupSize] = useState(4);
-    const [separator, setSeparator] = useState("");
+    const [separator, setSeparator] = useState("-");
     const [useCrypto, setUseCrypto] = useState(true);
     const [mode, setMode] = useState<"generate" | "validate">("generate");
     const isGenerate = mode === "generate";
@@ -28,12 +28,23 @@ export default function App() {
     const prefersReduced = useReducedMotion();
 
     useEffect(() => {
-    // Clear generated/validated state when core config changes
-    setId("");
-    setToValidate("");
-    setIsValid(null);
-    setCopied(null);
-    }, [charset, groups, groupSize, algorithm, mode]);
+      if (mode === "generate") {
+        // Auto-generate a new ID when generation settings change
+        const code = generateId({ charset, algorithm, groups, groupSize, useCrypto });
+        setId(code);
+        setIsValid(null);
+        setCopied(null);
+      } else {
+        // In validate mode, re-run validation if there's input
+        if (toValidate.trim()) {
+          const ok = validateId(toValidate, { charset, algorithm, groups, groupSize });
+          setIsValid(ok);
+        } else {
+          setIsValid(null);
+        }
+        setCopied(null);
+      }
+    }, [charset, groups, groupSize, algorithm, useCrypto, mode]);
 
     const totalLength = useMemo(() => groups * groupSize, [groups, groupSize]);
     const bitsPerChar = charset === "numeric" ? Math.log2(10) : Math.log2(36);
@@ -164,16 +175,18 @@ export default function App() {
                   >
                     <div className="relative h-full w-full overflow-hidden flex items-center justify-center">
                       <AnimatePresence initial={false} mode="wait">
-                        <motion.span
-                          key={pretty || "empty"}
-                          initial={prefersReduced ? { opacity: 0 } : { y: -24, opacity: 0 }}
-                          animate={prefersReduced ? { opacity: 1 } : { y: 0, opacity: 1 }}
-                          exit={prefersReduced ? { opacity: 0 } : { y: 24, opacity: 0 }}
-                          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                          className="inline-block"
-                        >
-                          {pretty || "—"}
-                        </motion.span>
+                        {pretty ? (
+                          <motion.span
+                            key={pretty}
+                            initial={prefersReduced ? { opacity: 0 } : { y: -24, opacity: 0 }}
+                            animate={prefersReduced ? { opacity: 1 } : { y: 0, opacity: 1 }}
+                            exit={prefersReduced ? { opacity: 0 } : { y: 24, opacity: 0 }}
+                            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                            className="inline-block"
+                          >
+                            {pretty}
+                          </motion.span>
+                        ) : null}
                       </AnimatePresence>
                     </div>
                   </pre>
