@@ -88,7 +88,7 @@ export default function App() {
           <p className="text-sm text-muted-foreground">
             Generate &amp; validate structured IDs/codes with optional checksums.
           </p>
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center mt-4">
             <button
               type="button"
               role="switch"
@@ -131,9 +131,8 @@ export default function App() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -12, scale: 0.98 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                className="space-y-3"
+                className="space-y-7"
               >
-                <div className="text-xs text-muted-foreground text-center">Click the code to copy</div>
                 <div className="relative">
                   <AnimatePresence mode="popLayout">
                     <motion.pre
@@ -184,9 +183,8 @@ export default function App() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -12, scale: 0.98 }}
                 transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-                className="space-y-3"
+                className="space-y-7"
               >
-                <div className="text-xs text-muted-foreground text-center">Paste or type an ID, then validate</div>
                 <div className="relative">
                   <Input
                     value={toValidate}
