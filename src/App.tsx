@@ -82,6 +82,25 @@ export default function App() {
 
     return (
       <div className="mx-auto max-w-3xl p-6 space-y-8">
+        {/* Background (fixed) */}
+        <div aria-hidden className="pointer-events-none fixed inset-0 -z-10">
+          {/* soft radial glow from top */}
+          <div className="absolute inset-0 bg-[radial-gradient(50%_50%_at_50%_0%,hsl(var(--primary)/0.10),transparent_60%)]" />
+          {/* subtle grid pattern */}
+          <svg
+            className="absolute inset-0 h-full w-full opacity-[0.12] dark:opacity-[0.16]"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <pattern id="sid-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+                <path d="M 32 0 L 0 0 0 32" fill="none" stroke="currentColor" strokeWidth="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#sid-grid)" className="text-foreground" />
+          </svg>
+          {/* bottom vignette to fade content edges */}
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background to-transparent" />
+        </div>
         {/* Hero */}
         <header className="text-center space-y-3">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">structured-id</h1>
