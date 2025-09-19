@@ -194,7 +194,9 @@ export default function App() {
                     placeholder="Paste an ID to validate"
                     className="mx-auto w-full rounded-2xl bg-secondary/60 p-5 md:p-6 text-center text-xl md:text-2xl font-mono shadow-sm h-20 md:h-24"
                   />
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.06 }}
+                    whileTap={{ scale: 0.94 }}
                     type="button"
                     title="Paste from clipboard"
                     aria-label="Paste from clipboard"
@@ -206,13 +208,11 @@ export default function App() {
                         // Clipboard API may be unavailable; ignore
                       }
                     }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-9 w-9 rounded-md border border-border bg-background/80 hover:bg-background transition"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center h-9 w-9 rounded-md border border-border bg-background/80 hover:bg-background transition shadow-sm hover:shadow-md"
                   >
-                    {/* Clipboard icon (SVG) */}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 opacity-80">
-                      <path d="M16 2h-2.586A2 2 0 0 0 12 1a2 2 0 0 0-1.414.586L9 3H8a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a3 3 0 0 0-2-3Zm-4-1c.265 0 .52.105.707.293L13.414 2H10.586L11.293 1.293A1 1 0 0 1 12 1ZM8 5h8v13H8V5Z" />
-                    </svg>
-                  </button>
+                    {/* Clipboard icon as image */}
+                    <img src="/paste.svg" alt="Paste" className="h-5 w-5 opacity-80" />
+                  </motion.button>
                 </div>
                 <div className="flex items-center justify-center gap-3">
                   <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}>
