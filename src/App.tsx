@@ -6,7 +6,7 @@ import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Checkbox } from "./components/ui/checkbox";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "./components/ui/select";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 export default function App() {
     const [charset, setCharset] = useState<Charset>("numeric");
@@ -25,6 +25,7 @@ export default function App() {
 
     const [copied, setCopied] = useState<null | "raw" | "formatted">(null);
     const copyTimer = useRef<number | null>(null);
+    const prefersReduced = useReducedMotion();
 
     useEffect(() => {
     // Clear generated/validated state when core config changes
@@ -153,23 +154,29 @@ export default function App() {
                 className="space-y-7"
               >
                 <div className="relative">
-                  <AnimatePresence mode="popLayout">
-                    <motion.pre
-                      key={pretty || "empty"}
-                      role="button"
-                      tabIndex={0}
-                      title="Click to copy"
-                      onClick={() => copyToClipboard(pretty, "raw")}
-                      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && copyToClipboard(pretty, "raw")}
-                      className="mx-auto max-w-full select-text rounded-2xl bg-secondary/70 p-5 md:p-6 text-center text-xl md:text-2xl font-mono overflow-x-auto shadow-sm cursor-pointer ring-0 hover:ring-1 ring-primary transition h-20 md:h-24 flex items-center justify-center"
-                      initial={{ opacity: 0, y: -6, scale: 0.99 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 6, scale: 0.99 }}
-                      transition={{ duration: 0.18 }}
-                    >
-                      {pretty || "—"}
-                    </motion.pre>
-                  </AnimatePresence>
+                  <pre
+                    role="button"
+                    tabIndex={0}
+                    title="Click to copy"
+                    onClick={() => copyToClipboard(pretty, "raw")}
+                    onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && copyToClipboard(pretty, "raw")}
+                    className="mx-auto max-w-full select-text rounded-2xl bg-secondary/70 p-5 md:p-6 text-center text-xl md:text-2xl font-mono overflow-hidden shadow-sm cursor-pointer ring-0 hover:ring-1 ring-primary transition h-20 md:h-24 flex items-center justify-center will-change-transform transform-gpu"
+                  >
+                    <div className="relative h-full w-full overflow-hidden flex items-center justify-center">
+                      <AnimatePresence initial={false} mode="wait">
+                        <motion.span
+                          key={pretty || "empty"}
+                          initial={prefersReduced ? { opacity: 0 } : { y: -24, opacity: 0 }}
+                          animate={prefersReduced ? { opacity: 1 } : { y: 0, opacity: 1 }}
+                          exit={prefersReduced ? { opacity: 0 } : { y: 24, opacity: 0 }}
+                          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                          className="inline-block"
+                        >
+                          {pretty || "—"}
+                        </motion.span>
+                      </AnimatePresence>
+                    </div>
+                  </pre>
                   <AnimatePresence>
                     {copied === "raw" && (
                       <motion.span
