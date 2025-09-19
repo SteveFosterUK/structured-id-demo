@@ -16,6 +16,8 @@ export default function App() {
     const [separator, setSeparator] = useState("");
     const [useCrypto, setUseCrypto] = useState(true);
     const [mode, setMode] = useState<"generate" | "validate">("generate");
+    const isGenerate = mode === "generate";
+    const toggleMode = () => setMode(isGenerate ? "validate" : "generate");
 
     const [id, setId] = useState("");
     const [toValidate, setToValidate] = useState("");
@@ -86,21 +88,36 @@ export default function App() {
           <p className="text-sm text-muted-foreground">
             Generate &amp; validate structured IDs/codes with optional checksums.
           </p>
-          <div className="flex items-center justify-center gap-2">
-            <Button
-              variant={mode === "generate" ? "default" : "secondary"}
-              onClick={() => setMode("generate")}
-              className="h-8 px-3"
+          <div className="flex items-center justify-center">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isGenerate}
+              onClick={toggleMode}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  toggleMode();
+                }
+              }}
+              className={`relative inline-grid grid-cols-2 items-center w-56 h-12 rounded-full border border-border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary ${isGenerate ? "bg-primary/10" : "bg-secondary/70"} overflow-hidden`}
+              aria-label={isGenerate ? "Switch to Validate" : "Switch to Generate"}
             >
-              Generate
-            </Button>
-            <Button
-              variant={mode === "validate" ? "default" : "secondary"}
-              onClick={() => setMode("validate")}
-              className="h-8 px-3"
-            >
-              Validate
-            </Button>
+              {/* Labels (now in grid cells, centered) */}
+              <span className={`z-10 text-sm font-medium select-none text-center ${isGenerate ? "text-foreground" : "text-muted-foreground"}`}>
+                Generate
+              </span>
+              <span className={`z-10 text-sm font-medium select-none text-center ${!isGenerate ? "text-foreground" : "text-muted-foreground"}`}>
+                Validate
+              </span>
+              {/* Knob */}
+              <motion.span
+                layout
+                transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                className="absolute top-1 left-1 bottom-1 w-[calc(50%-8px)] rounded-full bg-background/95 shadow-md border border-border z-0 pointer-events-none"
+                style={{ left: isGenerate ? 4 : "calc(50% + 4px)" }}
+              />
+            </button>
           </div>
         </header>
 
@@ -364,7 +381,6 @@ export default function App() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">Validation enforces charset, length &amp; checksum.</p>
                 </CardContent>
               </Card>
             </motion.div>
