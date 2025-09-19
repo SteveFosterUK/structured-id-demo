@@ -253,7 +253,12 @@ export default function App() {
                 </div>
                 <div className="flex items-center justify-center gap-3">
                   <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}>
-                    <Button variant="secondary" className="transition shadow-sm hover:shadow-md" onClick={handleValidate}>
+                    <Button
+                      variant="secondary"
+                      className="transition shadow-sm hover:shadow-md"
+                      onClick={handleValidate}
+                      disabled={!toValidate.trim()}
+                    >
                       Validate
                     </Button>
                   </motion.div>
