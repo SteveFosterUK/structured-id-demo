@@ -1,21 +1,51 @@
-# React + TypeScript + Vite
+# structured-id demo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interactive demo for [**structured-id**](https://www.npmjs.com/package/structured-id) — a TypeScript library to generate & validate **structured IDs/codes** (numeric or alphanumeric) with optional **checksums** (Luhn / mod36), grouping & formatting, and zero runtime deps.
 
-While this project uses React, Vite supports many popular JS frameworks. [See all the supported frameworks](https://vitejs.dev/guide/#scaffolding-your-first-vite-project).
+**Live demo:** https://structured-id-demo.vercel.app/
+**Library:** https://www.npmjs.com/package/structured-id • https://github.com/SteveFosterUK/structured-id
 
-## Deploy Your Own
+---
 
-Deploy your own Vite project with Vercel.
+## ✨ Features
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vercel/examples/tree/main/framework-boilerplates/vite-react&template=vite-react)
+- Generate IDs/codes:
+    - **Charsets:** `numeric (0–9)` or `alphanumeric (0–9, A–Z)`
+    - **Checksums:** `luhn` (numeric) or `mod36` (alphanumeric) – optional
+    - **Structure:** configurable `groups × groupSize` with a separator (e.g. `1234-5678-...`)
+    - **RNG:** Web Crypto when available, fallback to `Math.random`
+- Validate codes using the **same settings** (charset, groups, checksum).
+- Smooth UI:
+    - **Slot-machine** animation on generate
+    - **Reduced motion** support (respects OS/Browser prefers-reduced-motion)
+    - **Copy to clipboard** for generated/structured outputs
+- Built with **React + Vite + Tailwind + shadcn/ui + Framer Motion**.
+- Deployed on **Vercel**.
 
-_Live Example: https://vite-react-example.vercel.app_
+---
 
-### Deploying From Your Terminal
+## 🛠️ Tech Stack
 
-You can deploy your new Vite project with a single command from your terminal using [Vercel CLI](https://vercel.com/download):
+- React + TypeScript
+- Vite
+- Tailwind CSS (+ shadcn/ui)
+- Framer Motion
+- Vercel
 
-```shell
-$ vercel
-```
+---
+
+## 🚀 Local Development
+
+```bash
+# 1) Clone
+git clone https://github.com/SteveFosterUK/structured-id-demo
+cd structured-id-demo
+
+# 2) Install
+npm i
+
+# 3) Run dev server
+npm run dev
+
+# 4) Open
+# Vite will print a local URL (usually http://localhost:5173)
