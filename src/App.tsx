@@ -13,6 +13,8 @@ export default function App() {
     const [algorithm, setAlgorithm] = useState<Algorithm>("none");
     const [groups, setGroups] = useState(4);
     const [groupSize, setGroupSize] = useState(4);
+    const [patternMode, setPatternMode] = useState(false);
+    const [pattern, setPattern] = useState("####-####-####");
     const [separator, setSeparator] = useState("-");
     const [useCrypto, setUseCrypto] = useState(true);
     const [mode, setMode] = useState<"generate" | "validate">("generate");
@@ -28,45 +30,53 @@ export default function App() {
     const prefersReduced = useReducedMotion();
 
     useEffect(() => {
-      if (mode === "generate") {
-        // Auto-generate a new ID when generation settings change
-        const code = generateId({ charset, algorithm, groups, groupSize, useCrypto });
-        setId(code);
-        setIsValid(null);
-        setCopied(null);
-      } else {
-        // In validate mode, re-run validation if there's input
-        if (toValidate.trim()) {
-          const ok = validateId(toValidate, { charset, algorithm, groups, groupSize });
-          setIsValid(ok);
+        if (mode === "generate") {
+            // Auto-generate a new ID when generation settings change
+            const code = patternMode
+                ? generateId({ charset, algorithm, useCrypto, pattern })
+                : generateId({ charset, algorithm, groups, groupSize, useCrypto });
+            setId(code);
+            setIsValid(null);
+            setCopied(null);
         } else {
-          setIsValid(null);
+            // In validate mode, re-run validation if there's input
+            if (toValidate.trim()) {
+                const ok = patternMode
+                    ? validateId(toValidate, { charset, algorithm, pattern })
+                    : validateId(toValidate, { charset, algorithm, groups, groupSize });
+                setIsValid(ok);
+            } else {
+                setIsValid(null);
+            }
+            setCopied(null);
         }
-        setCopied(null);
-      }
-    }, [charset, groups, groupSize, algorithm, useCrypto, mode]);
+    }, [charset, groups, groupSize, algorithm, useCrypto, mode, patternMode, pattern, toValidate]);
 
-    const totalLength = useMemo(() => groups * groupSize, [groups, groupSize]);
+    function countHashes(p: string) {
+        let n = 0;
+        for (let i = 0; i < p.length; i++) if (p[i] === '#') n++;
+        return n;
+    }
+    const totalLength = useMemo(
+        () => (patternMode ? countHashes(pattern) : groups * groupSize),
+        [patternMode, pattern, groups, groupSize]
+    );
     const bitsPerChar = charset === "numeric" ? Math.log2(10) : Math.log2(36);
     const entropyBits = Math.round(bitsPerChar * totalLength);
 
     function handleGenerate() {
-        const code = generateId({
-            charset,
-            algorithm,
-            groups,
-            groupSize,
-            useCrypto,
-        });
-
+        const code = patternMode
+            ? generateId({ charset, algorithm, useCrypto, pattern })
+            : generateId({ charset, algorithm, groups, groupSize, useCrypto });
         setId(code);
         setIsValid(null);
     }
 
     function handleValidate() {
         const target = toValidate || id;
-        const ok = validateId(target, { charset, algorithm, groups, groupSize });
-
+        const ok = patternMode
+            ? validateId(target, { charset, algorithm, pattern })
+            : validateId(target, { charset, algorithm, groups, groupSize });
         setIsValid(ok);
     }
 
@@ -84,13 +94,13 @@ export default function App() {
 
     const pretty = useMemo(() => {
         if (!id) return "";
-
+        if (patternMode) return id; // already shaped by pattern
         try {
             return formatId(id, { groups, groupSize, separator, charset });
         } catch {
             return id;
         }
-    }, [id, groups, groupSize, separator, charset]);
+    }, [id, groups, groupSize, separator, charset, patternMode]);
 
     return (
       <div className="mx-auto max-w-3xl p-6 space-y-8">
@@ -310,7 +320,7 @@ export default function App() {
                   </AnimatePresence>
                 </div>
                 <p className="text-center text-xs text-muted-foreground">
-                  Uses current settings (charset, groups, group size, checksum) when validating.
+                    Uses current settings (charset, {patternMode ? 'pattern' : 'groups & group size'}, checksum) when validating.
                 </p>
               </motion.div>
             )}
@@ -328,58 +338,80 @@ export default function App() {
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="grid gap-4 md:grid-cols-2"
             >
-              {/* Options */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Options</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Charset</Label>
-                    <Select
-                      value={charset}
-                      onValueChange={(v: Charset) => {
-                        setCharset(v);
-                        if (v === "numeric" && algorithm === "mod36") setAlgorithm("none");
-                        if (v === "alphanumeric" && algorithm === "luhn") setAlgorithm("none");
-                      }}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Choose charset" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="numeric">numeric (0–9)</SelectItem>
-                        <SelectItem value="alphanumeric">alphanumeric (0–9, A–Z)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Groups</Label>
-                      <Input type="number" min={1} value={groups}
-                        onChange={(e) => setGroups(Math.max(1, Number(e.target.value) || 1))} />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Group size</Label>
-                      <Input type="number" min={1} value={groupSize}
-                        onChange={(e) => setGroupSize(Math.max(1, Number(e.target.value) || 1))} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Formatting */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Formatting</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Separator</Label>
-                    <Input placeholder="space, - , etc" value={separator}
-                           onChange={(e) => setSeparator(e.target.value)} />
-                  </div>
-                </CardContent>
-              </Card>
-
+                {/* Options */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Options</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Charset</Label>
+                            <Select
+                                value={charset}
+                                onValueChange={(v: Charset) => {
+                                    setCharset(v);
+                                    if (v === "numeric" && algorithm === "mod36") setAlgorithm("none");
+                                    if (v === "alphanumeric" && algorithm === "luhn") setAlgorithm("none");
+                                }}
+                            >
+                                <SelectTrigger><SelectValue placeholder="Choose charset" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="numeric">numeric (0–9)</SelectItem>
+                                    <SelectItem value="alphanumeric">alphanumeric (0–9, A–Z)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Groups</Label>
+                                <Input type="number" min={1} value={groups} disabled={patternMode}
+                                       onChange={(e) => setGroups(Math.max(1, Number(e.target.value) || 1))} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Group size</Label>
+                                <Input type="number" min={1} value={groupSize} disabled={patternMode}
+                                       onChange={(e) => setGroupSize(Math.max(1, Number(e.target.value) || 1))} />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Separator</Label>
+                            <Input
+                                placeholder="space, - , etc"
+                                value={separator}
+                                onChange={(e) => setSeparator(e.target.value)}
+                                disabled={patternMode}
+                            />
+                            {patternMode && (
+                                <p className="text-xs text-muted-foreground">Ignored in pattern mode.</p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
+                {/* Pattern */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Pattern</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="patternMode"
+                                checked={patternMode}
+                                onCheckedChange={(b) => setPatternMode(Boolean(b))}
+                            />
+                            <Label htmlFor="patternMode">Enable pattern mode</Label>
+                        </div>
+                        <Input
+                            value={pattern}
+                            onChange={(e) => setPattern(e.target.value)}
+                            placeholder="####-####-####"
+                            disabled={!patternMode}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Use <code>#</code> for random characters ({charset === 'numeric' ? 'digits' : 'A–Z & 0–9'}). Literals are kept. If a checksum is enabled, the <b>last #</b> is used as the checksum.
+                        </p>
+                    </CardContent>
+                </Card>
               {/* Checksum */}
               <Card>
                 <CardHeader>
@@ -452,18 +484,42 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Groups</Label>
-                      <Input type="number" min={1} value={groups}
+                      <Input type="number" min={1} value={groups} disabled={patternMode}
                         onChange={(e) => setGroups(Math.max(1, Number(e.target.value) || 1))} />
                     </div>
                     <div className="space-y-2">
                       <Label>Group size</Label>
-                      <Input type="number" min={1} value={groupSize}
+                      <Input type="number" min={1} value={groupSize} disabled={patternMode}
                         onChange={(e) => setGroupSize(Math.max(1, Number(e.target.value) || 1))} />
                     </div>
                   </div>
                 </CardContent>
               </Card>
-
+                {/* Pattern (for validation) */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Pattern</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="patternModeV"
+                                checked={patternMode}
+                                onCheckedChange={(b) => setPatternMode(Boolean(b))}
+                            />
+                            <Label htmlFor="patternModeV">Enable pattern mode</Label>
+                        </div>
+                        <Input
+                            value={pattern}
+                            onChange={(e) => setPattern(e.target.value)}
+                            placeholder="####-####-####"
+                            disabled={!patternMode}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            When enabled, validation expects the input to match this pattern exactly. The last <code>#</code> is treated as checksum when an algorithm is selected.
+                        </p>
+                    </CardContent>
+                </Card>
               {/* Checksum (still relevant for validation) */}
               <Card>
                 <CardHeader>

@@ -16,8 +16,9 @@ Interactive demo for [**structured-id**](https://www.npmjs.com/package/structure
     - **Charsets:** `numeric (0–9)` or `alphanumeric (0–9, A–Z)`
     - **Checksums:** `luhn` (numeric) or `mod36` (alphanumeric) – optional
     - **Structure:** configurable `groups × groupSize` with a separator (e.g. `1234-5678-...`)
+    - **Patterns:** define exact layouts with `#` placeholders (e.g. `####-####-####`, `PROMO-###-###`); last `#` can act as a checksum slot if enabled
     - **RNG:** Web Crypto when available, fallback to `Math.random`
-- Validate codes using the **same settings** (charset, groups, checksum).
+- Validate codes using the **same settings** (charset, groups, checksum, or pattern).
 - Smooth UI:
     - **Slot-machine** animation on generate
     - **Reduced motion** support (respects OS/Browser prefers-reduced-motion)
